@@ -9,11 +9,28 @@ export interface DateObject {
 }
 
 const props = defineProps<{
-	min: number;
-	max: number;
+	startYear?: number;
+	endYear?: number;
+	selectedYear?: number;
 	data: Array<DateObject>;
 }>();
 defineEmits(["dateClick"]);
+
+const range = computed(() => {
+	const start =
+		props.startYear ??
+		props.data.map((date) => new Date(date.startDate).getFullYear()).sort()[0] ??
+		1900;
+	const end =
+		props.endYear ??
+		props.data
+			.map((date) => new Date(date.startDate).getFullYear())
+			.sort()
+			.reverse()[0] ??
+		2000;
+	return { start, end };
+});
+
 const dataMap = new Map();
 
 props.data.forEach((date) => {
@@ -33,28 +50,38 @@ props.data.forEach((date) => {
 		.set(date.tageszaehler ?? 0, date);
 });
 
-const selected = ref(props.max);
+const selected = ref(props.selectedYear ?? range.value.end);
 </script>
 
 <template>
-	<div class="grid grid-cols-[1fr_4fr]">
-		<div class="flex h-fit flex-wrap">
-			<button
-				v-for="opt in max - min + 1"
-				:key="opt"
-				class="m-2 rounded p-2 transition hover:bg-slate-200"
-				:class="opt - 1 + min === selected && 'bg-slate-300'"
-				:value="opt - 1 + min"
-				@click="selected = opt - 1 + min"
-			>
-				{{ opt - 1 + min }}
-			</button>
+	<div class="flex flex-wrap">
+		<div class="h-fit min-w-36 grow basis-1/4">
+			<div class="text-center text-2xl">Jahr</div>
+			<div class="flex flex-wrap justify-center">
+				<button
+					v-for="opt in range.end - range.start + 1"
+					:key="opt"
+					class="m-2 rounded border-2 p-2 transition hover:bg-slate-200"
+					:class="{
+						'border-transparent': opt - 1 + range.start !== selected,
+						'border-gray-400': opt - 1 + range.start === selected,
+						'bg-green-200': dataMap.has(opt - 1 + range.start),
+					}"
+					:value="opt - 1 + range.start"
+					@click="selected = opt - 1 + range.start"
+				>
+					{{ opt - 1 + range.start }}
+				</button>
+			</div>
 		</div>
-		<Year
-			:key="selected"
-			:year="selected"
-			:data="dataMap.get(selected)"
-			@date-click="$emit('dateClick', $event)"
-		/>
+		<div class="grow basis-3/4">
+			<div class="text-center text-2xl">{{ selected }}</div>
+			<Year
+				:key="selected"
+				:year="selected"
+				:data="dataMap.get(selected)"
+				@date-click="$emit('dateClick', $event)"
+			/>
+		</div>
 	</div>
 </template>
