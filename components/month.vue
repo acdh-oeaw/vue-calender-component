@@ -1,15 +1,28 @@
 <script setup lang="ts">
+import { Popover, PopoverButton, PopoverPanel } from "@headlessui/vue";
+import { ChevronRight } from "lucide-vue-next";
+
 import type { DateObject } from "./calendar.vue";
 
 const props = defineProps<{
 	month: number;
 	year: number;
-	data: Map<number, DateObject> | undefined;
+	data?: Map<number, Map<number, DateObject>>;
 	firstDay?: number;
 }>();
+
 defineEmits(["dateClick"]);
+
 const date = new Date(props.year, props.month);
 const nDays = new Date(props.year, props.month + 1, 0).getDate();
+
+function eventArray(day: number): Array<DateObject> {
+	return props.data?.has(day)
+		? Array.from(props.data.get(day), ([, value]: [number, DateObject]) => value).sort(
+				(a, b) => (a.tageszaehler ?? 0) - (b.tageszaehler ?? 0),
+			)
+		: [];
+}
 
 function actualMod(n: number, m: number) {
 	return ((n % m) + m) % m;
@@ -39,20 +52,44 @@ function actualMod(n: number, m: number) {
 				)}`,
 			}"
 		/>
-		<button
-			v-for="day in nDays"
-			:key="day"
-			class="flex aspect-square cursor-pointer items-center justify-center rounded-lg transition hover:bg-slate-200"
-			:class="data?.get(day) && 'bg-green-200'"
-			@click="
-				$emit('dateClick', {
-					date: `${date.getFullYear()}-${date.getMonth() + 1}-${day}`,
-					data: data?.get(day) ? Array.from(data.get(day), ([, value]) => value) : null,
-					event: $event,
-				})
-			"
-		>
-			{{ day }}
-		</button>
+		<Popover v-for="day in nDays" :key="day" class="relative">
+			<PopoverButton
+				as="button"
+				class="flex aspect-square w-full cursor-pointer items-center justify-center rounded-lg transition hover:bg-slate-200"
+				:class="data?.get(day) && 'bg-green-200'"
+				@click="
+					$emit('dateClick', {
+						date: `${date.getFullYear()}-${date.getMonth() + 1}-${day}`,
+						data: eventArray(day),
+						event: $event,
+					})
+				"
+			>
+				{{ day }}
+			</PopoverButton>
+			<PopoverPanel
+				v-if="data?.has(day)"
+				as="div"
+				class="absolute right-0 z-10 w-max rounded border bg-white"
+			>
+				<div v-for="event in eventArray(day)" :key="String(event)">
+					<component
+						:is="event.link ? 'a' : 'div'"
+						:href="event.link"
+						class="flex items-center justify-between gap-2 border p-2 text-left"
+						:class="event.link && 'transition hover:bg-slate-200 active:bg-slate-300'"
+					>
+						<div>
+							<h2>{{ event.name }}</h2>
+							<span>
+								{{ event.startDate }}
+								<template v-if="event.endDate">- {{ event.endDate }}</template>
+							</span>
+						</div>
+						<ChevronRight v-if="event.link" class="h-5 w-5 shrink-0" />
+					</component>
+				</div>
+			</PopoverPanel>
+		</Popover>
 	</div>
 </template>

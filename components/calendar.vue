@@ -6,6 +6,7 @@ export interface DateObject {
 	tageszaehler?: number;
 	link?: string;
 	properties?: object;
+	currDate?: Date;
 }
 
 const props = defineProps<{
@@ -33,8 +34,23 @@ const range = computed(() => {
 
 const dataMap = new Map();
 
+const dataWithDuplicates: Array<DateObject> = [];
+
 props.data.forEach((date) => {
-	const isoDate = new Date(date.startDate);
+	if (date.endDate) {
+		const currDate = new Date(date.startDate);
+		const endDate = new Date(date.endDate);
+		while (currDate.toISOString() <= endDate.toISOString()) {
+			dataWithDuplicates.push({
+				...date,
+				currDate,
+			});
+		}
+	} else dataWithDuplicates.push(date);
+});
+
+dataWithDuplicates.forEach((date) => {
+	const isoDate = date.currDate ?? new Date(date.startDate);
 	const year = isoDate.getFullYear();
 	const month = isoDate.getMonth();
 	const day = isoDate.getDate();

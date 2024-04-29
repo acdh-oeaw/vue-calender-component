@@ -4,7 +4,7 @@ import Month from "./month.vue";
 
 defineProps<{
 	year: number;
-	data: Map<number, Map<number, DateObject>> | undefined;
+	data: Map<number, Map<number, Map<number, DateObject>>>;
 }>();
 defineEmits(["dateClick"]);
 </script>
