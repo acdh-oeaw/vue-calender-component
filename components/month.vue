@@ -52,11 +52,30 @@ function actualMod(n: number, m: number) {
 				)}`,
 			}"
 		/>
-		<Popover v-for="day in nDays" :key="day" class="relative">
+		<Popover v-for="day in nDays" :key="day" class="relative -mx-0.5 h-[30px]">
+			<div
+				v-if="data && data.get(day)"
+				class="absolute inset-0 -z-10 overflow-hidden"
+				:style="{
+					opacity: 1 - 1 / (data.get(day).size + 1),
+					backgroundColor: eventArray(day)[0].color ?? 'red',
+				}"
+				:class="{
+					'mx-0.5 rounded-lg': !eventArray(day).some((element) => element.currDate),
+					'w-full': eventArray(day).some((element) => element.currDate),
+					'rounded-l-lg': eventArray(day).some((element) => element.currDate === element.startDate),
+					'rounded-r-lg': eventArray(day).some((element) => element.currDate === element.endDate),
+				}"
+			/>
 			<PopoverButton
 				as="button"
-				class="flex aspect-square w-full cursor-pointer items-center justify-center rounded-lg transition hover:bg-slate-200"
-				:class="data?.get(day) && 'bg-green-200'"
+				class="relative flex h-full w-full cursor-pointer items-center justify-center py-0.5 transition hover:bg-slate-200"
+				:class="{
+					'mx-0.5 rounded-lg': !eventArray(day).some((element) => element.currDate),
+					'w-full': eventArray(day).some((element) => element.currDate),
+					'rounded-l-lg': eventArray(day).some((element) => element.currDate === element.startDate),
+					'rounded-r-lg': eventArray(day).some((element) => element.currDate === element.endDate),
+				}"
 				@click="
 					$emit('dateClick', {
 						date: `${date.getFullYear()}-${date.getMonth() + 1}-${day}`,

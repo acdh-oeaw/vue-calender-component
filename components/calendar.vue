@@ -5,8 +5,9 @@ export interface DateObject {
 	endDate?: string;
 	tageszaehler?: number;
 	link?: string;
+	color?: string;
 	properties?: object;
-	currDate?: Date;
+	currDate?: string;
 }
 
 const props = defineProps<{
@@ -38,19 +39,28 @@ const dataWithDuplicates: Array<DateObject> = [];
 
 props.data.forEach((date) => {
 	if (date.endDate) {
-		const currDate = new Date(date.startDate);
 		const endDate = new Date(date.endDate);
-		while (currDate.toISOString() <= endDate.toISOString()) {
+
+		// fill gap of multi day events with dates
+		for (
+			const currDate = new Date(date.startDate);
+			currDate.toISOString() <= endDate.toISOString();
+			currDate.setDate(currDate.getDate() + 1)
+		) {
 			dataWithDuplicates.push({
 				...date,
-				currDate,
+				currDate: currDate.toISOString().split("T")[0],
 			});
 		}
-	} else dataWithDuplicates.push(date);
+	} else {
+		dataWithDuplicates.push(date);
+	}
 });
 
 dataWithDuplicates.forEach((date) => {
-	const isoDate = date.currDate ?? new Date(date.startDate);
+	console.log(date);
+
+	const isoDate = new Date(date.currDate ?? date.startDate);
 	const year = isoDate.getFullYear();
 	const month = isoDate.getMonth();
 	const day = isoDate.getDate();
